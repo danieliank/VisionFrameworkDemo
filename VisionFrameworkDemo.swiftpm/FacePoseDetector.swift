@@ -44,7 +44,7 @@ class FacePoseDetector {
         let yaw = (face.yaw?.doubleValue ?? 0) * -1.0
         let pitch = face.pitch?.doubleValue ?? 0
         let roll = face.roll?.doubleValue ?? 0
-
+        
         
         let passed: Bool
         
@@ -84,4 +84,6 @@ class FacePoseDetector {
         return passed
     }
 }
+
+
 
