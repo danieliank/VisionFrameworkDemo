@@ -4,9 +4,8 @@ struct ContentView: View {
     @State private var camera = CameraController()
     
     var body: some View {
-        CameraPreview(session: camera.session)
+        CameraPreview(controller: camera)
             .ignoresSafeArea()
-        
         /* Task 1 - Uncomment the line below to show what Vision framework can do (pro tip: SMILE!) */
 //            .overlay(alignment: .top) { detectionIndicator }
         
@@ -15,6 +14,7 @@ struct ContentView: View {
             .task { camera.start() }
     }
     
+    // Detection status — independent of the trainer.
     private var detectionIndicator: some View {
         Label(
             camera.faceDetected ? "Face detected" : "No face",
@@ -29,6 +29,7 @@ struct ContentView: View {
         .animation(.easeInOut(duration: 0.2), value: camera.faceDetected)
     }
     
+    // Trainer prompt + action.
     private var controls: some View {
         VStack(spacing: 16) {
             Text(camera.prompt)
@@ -54,7 +55,11 @@ struct ContentView: View {
     
     private var buttonTitle: String {
         if camera.isFinished { return "Start again" }
-        return camera.isRunning ? "Restart" : "Start posing"
+        return camera.isRunning ? "Restart" : "Start training"
     }
 }
+/* Task 1 - Uncomment the line below to show what Vision framework can do (pro tip: SMILE!) */
+//            .overlay(alignment: .top) { detectionIndicator }
 
+/* Task 2 - Uncomment the line below to show more capability of Vision framework (you might want to stretch your head) */
+//            .overlay(alignment: .bottom) { controls }

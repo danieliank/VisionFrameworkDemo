@@ -2,12 +2,13 @@ import SwiftUI
 import AVFoundation
 
 struct CameraPreview: UIViewRepresentable {
-    let session: AVCaptureSession
+    let controller: CameraController
     
     func makeUIView(context: Context) -> PreviewView {
         let view = PreviewView()
-        view.previewLayer.session = session
+        view.previewLayer.session = controller.session
         view.previewLayer.videoGravity = .resizeAspectFill
+        controller.attach(previewLayer: view.previewLayer)
         return view
     }
     

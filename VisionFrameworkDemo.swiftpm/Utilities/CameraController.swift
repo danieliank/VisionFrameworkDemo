@@ -16,7 +16,13 @@ final class CameraController: NSObject {
     
     private let sessionQueue = DispatchQueue(label: "camera.session")
     private let videoQueue = DispatchQueue(label: "camera.video")
+    private let output = AVCaptureVideoDataOutput()
     private var isConfigured = false
+    
+    private var device: AVCaptureDevice?
+    private weak var previewLayer: AVCaptureVideoPreviewLayer?
+    private var rotationCoordinator: AVCaptureDevice.RotationCoordinator?
+    private var rotationObservers: [NSKeyValueObservation] = []
     
     func start() {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
@@ -31,15 +37,18 @@ final class CameraController: NSObject {
         }
     }
     
+    func attach(previewLayer: AVCaptureVideoPreviewLayer) {
+        self.previewLayer = previewLayer
+        setUpRotationCoordinator()
+    }
+    
     func startTraining() {
         trainer.reset()
         isRunning = true
         isFinished = false
         prompt = trainer.currentStep
     }
-    
-    // MARK: - Session
-    
+        
     private func configureIfNeeded() {
         sessionQueue.async { [weak self] in
             guard let self else { return }
@@ -61,10 +70,50 @@ final class CameraController: NSObject {
             session.canAddInput(input)
         else { return }
         session.addInput(input)
+        device = camera
         
-        let output = AVCaptureVideoDataOutput()
         output.setSampleBufferDelegate(self, queue: videoQueue)
         if session.canAddOutput(output) { session.addOutput(output) }
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.setUpRotationCoordinator()
+        }
+    }
+        
+    private func setUpRotationCoordinator() {
+        guard let device else { return }
+        
+        let coordinator = AVCaptureDevice.RotationCoordinator(device: device, previewLayer: previewLayer)
+        rotationCoordinator = coordinator
+        
+        applyRotations()
+        
+        rotationObservers = [
+            coordinator.observe(\.videoRotationAngleForHorizonLevelPreview) { [weak self] _, _ in
+                self?.applyRotations()
+            },
+            coordinator.observe(\.videoRotationAngleForHorizonLevelCapture) { [weak self] _, _ in
+                self?.applyRotations()
+            }
+        ]
+    }
+    
+    private func applyRotations() {
+        guard let coordinator = rotationCoordinator else { return }
+        
+        if let preview = previewLayer?.connection {
+            let angle = coordinator.videoRotationAngleForHorizonLevelPreview
+            if preview.isVideoRotationAngleSupported(angle) {
+                preview.videoRotationAngle = angle
+            }
+        }
+        
+        if let capture = output.connection(with: .video) {
+            let angle = coordinator.videoRotationAngleForHorizonLevelCapture
+            if capture.isVideoRotationAngleSupported(angle) {
+                capture.videoRotationAngle = angle
+            }
+        }
     }
 }
 
