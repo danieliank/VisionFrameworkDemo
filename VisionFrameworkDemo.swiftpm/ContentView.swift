@@ -11,7 +11,7 @@ struct ContentView: View {
 //            .overlay(alignment: .top) { detectionIndicator }
         
         /* Task 2 - Uncomment the line below to show more capability of Vision framework (you might want to stretch your head) */
-            .overlay(alignment: .bottom) { controls }
+//            .overlay(alignment: .bottom) { controls }
             .task { camera.start() }
     }
     
